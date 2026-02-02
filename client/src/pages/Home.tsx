@@ -471,15 +471,8 @@ export default function Home() {
           </div>
         </Card>
 
-        {/* Footer Info */}
-        <div className="mt-8 text-center text-sm text-slate-600">
-          <p>
-            💡 提示：澳幣台幣金額越高越好。點擊金額可複製到剪貼板。
-          </p>
-        </div>
-
         {/* Rate Editor Toggle - Bottom */}
-        <div className="mt-8 pt-6 border-t border-slate-200">
+        <div className="mt-8">
           <Button
             onClick={() => setShowRateEditor(!showRateEditor)}
             className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2"
