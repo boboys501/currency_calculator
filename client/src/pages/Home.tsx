@@ -4,6 +4,7 @@
  * Design Philosophy: Modern Financial Dashboard
  * - Clean input form at the top
  * - Summary results in the middle
+ * - Standalone best result section
  * - Bank comparison table at the bottom
  * - Responsive design with mobile-first approach
  */
@@ -151,7 +152,7 @@ export default function Home() {
         </Card>
 
         {/* Summary Results */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           {/* AUD Net */}
           <Card className="p-4 border-slate-200 shadow-sm bg-white">
             <p className="text-sm text-slate-600 mb-1">澳幣淨額</p>
@@ -178,23 +179,33 @@ export default function Home() {
             </p>
             <p className="text-xs text-slate-500 mt-2">USD</p>
           </Card>
-
-          {/* Best Result */}
-          {result.bestBank && (
-            <Card className="p-4 border-emerald-200 shadow-sm bg-emerald-50">
-              <p className="text-sm text-emerald-700 mb-1 flex items-center gap-1">
-                <TrendingUp className="w-4 h-4" />
-                最優方案
-              </p>
-              <p className="text-2xl font-bold text-emerald-900 font-mono">
-                {formatCurrency(result.bestBank.audToTwdAmount, 0)}
-              </p>
-              <p className="text-xs text-emerald-700 mt-2">
-                {result.bestBank.bankName}
-              </p>
-            </Card>
-          )}
         </div>
+
+        {/* Best Result - Standalone Section */}
+        {result.bestBank && (
+          <Card className="mb-8 p-8 border-emerald-300 shadow-md bg-gradient-to-br from-emerald-50 to-emerald-100">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div>
+                <p className="text-sm text-emerald-700 mb-3 flex items-center gap-2 font-semibold">
+                  <TrendingUp className="w-5 h-5" />
+                  最優方案
+                </p>
+                <p className="text-lg text-emerald-900 mb-2">
+                  銀行：<span className="font-bold">{result.bestBank.bankName}</span>
+                </p>
+                <p className="text-lg text-emerald-900">
+                  兌換幣別：<span className="font-bold">澳幣 (AUD)</span>
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-emerald-700 mb-2">換得台幣總額</p>
+                <p className="text-4xl font-bold text-emerald-900 font-mono">
+                  NT${formatCurrency(result.bestBank.audToTwdAmount, 0)}
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* Bank Comparison Table */}
         <Card className="border-slate-200 shadow-sm overflow-hidden">
