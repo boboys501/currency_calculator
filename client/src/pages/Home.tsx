@@ -168,72 +168,7 @@ export default function Home() {
 
 
 
-        {/* Rate Editor Panel */}
-        {showRateEditor && (
-          <Card className="mb-8 p-6 border-blue-200 shadow-md bg-blue-50">
-            <h2 className="text-lg font-semibold text-slate-900 mb-6">編輯銀行匯率</h2>
-            <div className="space-y-4 mb-6">
-              {editingBanks.map((bank, idx) => (
-                <div key={idx} className="grid grid-cols-1 md:grid-cols-5 gap-3 p-4 bg-white rounded border border-slate-200">
-                  <div>
-                    <Label className="text-xs text-slate-600">銀行名稱</Label>
-                    <Input
-                      type="text"
-                      value={bank.name}
-                      onChange={(e) => handleEditBank(idx, "name", e.target.value)}
-                      className="border-slate-300 mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-slate-600">美金買入匯率</Label>
-                    <Input
-                      type="number"
-                      value={bank.usdToTwdRate}
-                      onChange={(e) => handleEditBank(idx, "usdToTwdRate", e.target.value)}
-                      className="border-slate-300 mt-1"
-                      step="0.0001"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-slate-600">澳幣買入匯率</Label>
-                    <Input
-                      type="number"
-                      value={bank.audToTwdRate}
-                      onChange={(e) => handleEditBank(idx, "audToTwdRate", e.target.value)}
-                      className="border-slate-300 mt-1"
-                      step="0.0001"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-slate-600">匯入手續費 (NTD)</Label>
-                    <Input
-                      type="number"
-                      value={bank.inFeeNtd}
-                      onChange={(e) => handleEditBank(idx, "inFeeNtd", e.target.value)}
-                      className="border-slate-300 mt-1"
-                      step="1"
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="flex gap-3">
-              <Button
-                onClick={handleUpdateRates}
-                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-              >
-                保存匯率
-              </Button>
-              <Button
-                onClick={handleResetRates}
-                variant="outline"
-                className="flex-1"
-              >
-                重置為預設值
-              </Button>
-            </div>
-          </Card>
-        )}
+
 
         {/* Input Section */}
         <Card className="mb-8 p-6 border-slate-200 shadow-sm">
@@ -485,6 +420,73 @@ export default function Home() {
             <p className="text-sm text-slate-600 mt-3 text-center">
               最後更新時間：<span className="font-semibold">{lastUpdateTime}</span>
             </p>
+          )}
+
+          {/* Rate Editor Panel */}
+          {showRateEditor && (
+            <Card className="mt-6 p-6 border-blue-200 shadow-md bg-blue-50">
+              <h2 className="text-lg font-semibold text-slate-900 mb-6">編輯銀行匯率</h2>
+              <div className="space-y-4 mb-6">
+                {editingBanks.map((bank, idx) => (
+                  <div key={idx} className="grid grid-cols-1 md:grid-cols-5 gap-3 p-4 bg-white rounded border border-slate-200">
+                    <div>
+                      <Label className="text-xs text-slate-600">銀行名稱</Label>
+                      <Input
+                        type="text"
+                        value={bank.name}
+                        onChange={(e) => handleEditBank(idx, "name", e.target.value)}
+                        className="border-slate-300 mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-slate-600">美金買入匯率</Label>
+                      <Input
+                        type="number"
+                        value={bank.usdToTwdRate}
+                        onChange={(e) => handleEditBank(idx, "usdToTwdRate", e.target.value)}
+                        className="border-slate-300 mt-1"
+                        step="0.0001"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-slate-600">澳幣買入匯率</Label>
+                      <Input
+                        type="number"
+                        value={bank.audToTwdRate}
+                        onChange={(e) => handleEditBank(idx, "audToTwdRate", e.target.value)}
+                        className="border-slate-300 mt-1"
+                        step="0.0001"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-slate-600">匯入手續費 (NTD)</Label>
+                      <Input
+                        type="number"
+                        value={bank.inFeeNtd}
+                        onChange={(e) => handleEditBank(idx, "inFeeNtd", e.target.value)}
+                        className="border-slate-300 mt-1"
+                        step="1"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleUpdateRates}
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                >
+                  保存匯率
+                </Button>
+                <Button
+                  onClick={handleResetRates}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  重置為預設值
+                </Button>
+              </div>
+            </Card>
           )}
         </div>
       </div>
