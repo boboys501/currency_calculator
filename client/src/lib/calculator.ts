@@ -11,19 +11,22 @@ export interface BankRate {
   name: string;
   usdToTwdRate: number;
   audToTwdRate: number;
-  inFeeNtd: number;
+  usdInFeeAud: number;  // 匯美金手續費 (AUD)
+  audInFeeAud: number;  // 匯澳幣手續費 (AUD)
+  receivingFeeNtd: number;  // 收款銀行解款手續費 (NTD)
 }
 
 export interface CalculationInput {
   audAmount: number;
-  audFeeNtd: number;
+  usdFeeAud: number;    // 匯美金手續費 (AUD)
+  audFeeAud: number;    // 匯澳幣手續費 (AUD)
   audToUsdRate: number;
 }
 
 export interface CalculationResult {
   audNetAmount: number;
   usdAmount: number;
-  usdFeeNtd: number;
+  usdFeeAud: number;
   usdNetAmount: number;
   bankComparisons: BankComparison[];
   bestBank: BankComparison | null;
@@ -34,7 +37,8 @@ export interface BankComparison {
   bankName: string;
   usdToTwdRate: number;
   audToTwdRate: number;
-  inFeeNtd: number;
+  usdInFeeAud: number;
+  audInFeeAud: number;
   usdToTwdAmount: number;
   audToTwdAmount: number;
   difference: number;
@@ -46,42 +50,44 @@ export interface BankComparison {
  * Calculate currency exchange with bank comparisons
  * 
  * Formula Logic:
- * 1. AUD Net = AUD Amount - AUD Fee
- * 2. USD Amount = AUD Net × AUD to USD Rate
- * 3. USD Fee = AUD Fee × AUD to USD Rate
- * 4. USD Net = USD Amount - USD Fee
- * 5. For each bank:
- *    - USD to TWD = USD Net × USD to TWD Rate + In Fee
- *    - AUD to TWD = AUD Net × AUD to TWD Rate + In Fee
+ * 1. USD Net (AUD) = AUD Amount - USD Fee (AUD)
+ * 2. USD Amount = USD Net (AUD) × AUD to USD Rate
+ * 3. AUD Net = AUD Amount - AUD Fee (AUD)
+ * 4. For each bank:
+ *    - USD to TWD = (AUD Amount - USD Fee) × AUD to USD Rate × USD to TWD Rate
+ *    - AUD to TWD = (AUD Amount - AUD Fee) × AUD to TWD Rate
  *    - Difference = USD to TWD - AUD to TWD
  */
 export function calculateExchange(
   input: CalculationInput,
   banks: BankRate[]
 ): CalculationResult {
-  // Step 1: Calculate net AUD amount
-  const audNetAmount = input.audAmount - input.audFeeNtd;
+  // Step 1: Calculate USD net amount in AUD
+  const usdNetAud = input.audAmount - input.usdFeeAud;
+  
+  // Step 2: Convert to USD amount
+  const usdAmount = usdNetAud * input.audToUsdRate;
 
-  // Step 2: Convert AUD to USD
-  const usdAmount = audNetAmount * input.audToUsdRate;
+  // Step 3: Calculate AUD net amount
+  const audNetAmount = input.audAmount - input.audFeeAud;
 
-  // Step 3: Calculate USD fee (proportional to AUD fee)
-  const usdFeeNtd = input.audFeeNtd * input.audToUsdRate;
-
-  // Step 4: Calculate net USD amount
-  const usdNetAmount = usdAmount - usdFeeNtd;
+  // Step 4: Calculate net USD amount (for display)
+  const usdNetAmount = usdAmount;
 
   // Step 5: Compare banks
   const bankComparisons = banks.map((bank) => {
-    const usdToTwdAmount = usdNetAmount * bank.usdToTwdRate + bank.inFeeNtd;
-    const audToTwdAmount = audNetAmount * bank.audToTwdRate + bank.inFeeNtd;
+    // 美金台幣 = (匯出澳幣 - 匯美金手續費) × AUD to USD Rate × USD to TWD Rate
+    const usdToTwdAmount = usdNetAud * input.audToUsdRate * bank.usdToTwdRate;
+    // 澳幣台幣 = (匯出澳幣 - 匯澳幣手續費) × AUD to TWD Rate
+    const audToTwdAmount = audNetAmount * bank.audToTwdRate;
     const difference = usdToTwdAmount - audToTwdAmount;
 
     return {
       bankName: bank.name,
       usdToTwdRate: bank.usdToTwdRate,
       audToTwdRate: bank.audToTwdRate,
-      inFeeNtd: bank.inFeeNtd,
+      usdInFeeAud: bank.usdInFeeAud,
+      audInFeeAud: bank.audInFeeAud,
       usdToTwdAmount: Math.round(usdToTwdAmount * 100) / 100,
       audToTwdAmount: Math.round(audToTwdAmount * 100) / 100,
       difference: Math.round(difference * 100) / 100,
@@ -111,7 +117,7 @@ export function calculateExchange(
   return {
     audNetAmount: Math.round(audNetAmount * 100) / 100,
     usdAmount: Math.round(usdAmount * 100) / 100,
-    usdFeeNtd: Math.round(usdFeeNtd * 100) / 100,
+    usdFeeAud: input.usdFeeAud,
     usdNetAmount: Math.round(usdNetAmount * 100) / 100,
     bankComparisons,
     bestBank: bankComparisons.find((b) => b.isBest) || null,

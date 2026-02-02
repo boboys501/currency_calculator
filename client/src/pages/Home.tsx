@@ -30,31 +30,41 @@ const DEFAULT_BANKS: BankRate[] = [
     name: "台新銀行",
     usdToTwdRate: 31.553,
     audToTwdRate: 21.883,
-    inFeeNtd: 200,
+    usdInFeeAud: 8,
+    audInFeeAud: 8,
+    receivingFeeNtd: 0,
   },
   {
     name: "台灣銀行",
     usdToTwdRate: 31.515,
     audToTwdRate: 21.805,
-    inFeeNtd: 200,
+    usdInFeeAud: 8,
+    audInFeeAud: 8,
+    receivingFeeNtd: 0,
   },
   {
     name: "永豐銀行",
     usdToTwdRate: 31.563,
     audToTwdRate: 21.8085,
-    inFeeNtd: 200,
+    usdInFeeAud: 8,
+    audInFeeAud: 8,
+    receivingFeeNtd: 0,
   },
   {
     name: "國泰世華",
     usdToTwdRate: 31.54,
     audToTwdRate: 21.86,
-    inFeeNtd: 200,
+    usdInFeeAud: 8,
+    audInFeeAud: 8,
+    receivingFeeNtd: 0,
   },
   {
     name: "遠銀銀行",
     usdToTwdRate: 31.54,
     audToTwdRate: 21.805,
-    inFeeNtd: 50,
+    usdInFeeAud: 8,
+    audInFeeAud: 8,
+    receivingFeeNtd: 0,
   },
 ];
 
@@ -64,7 +74,8 @@ const TIMESTAMP_KEY = "currencyCalculatorTimestamp";
 export default function Home() {
   // Form inputs
   const [audAmount, setAudAmount] = useState<number>(2000);
-  const [audFeeNtd, setAudFeeNtd] = useState<number>(8);
+  const [usdFeeAud, setUsdFeeAud] = useState<number>(8);
+  const [audFeeAud, setAudFeeAud] = useState<number>(8);
   const [audToUsdRate, setAudToUsdRate] = useState<number>(0.6545);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [banks, setBanks] = useState<BankRate[]>(DEFAULT_BANKS);
@@ -95,7 +106,8 @@ export default function Home() {
   // Calculate results
   const input: CalculationInput = {
     audAmount,
-    audFeeNtd,
+    usdFeeAud,
+    audFeeAud,
     audToUsdRate,
   };
 
@@ -168,14 +180,12 @@ export default function Home() {
 
 
 
-
-
         {/* Input Section */}
         <Card className="mb-8 p-6 border-slate-200 shadow-sm">
           <h2 className="text-xl font-semibold text-slate-900 mb-6">
             計算參數
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* AUD Amount */}
             <div className="space-y-2">
               <Label htmlFor="aud-amount" className="text-sm font-medium text-slate-700">
@@ -187,7 +197,23 @@ export default function Home() {
                 value={audAmount}
                 onChange={(e) => setAudAmount(parseFloat(e.target.value) || 0)}
                 className="border-slate-300 focus:border-blue-500 focus:ring-blue-500"
-                step="100"
+                step="1"
+                min="0"
+              />
+            </div>
+
+            {/* USD Fee */}
+            <div className="space-y-2">
+              <Label htmlFor="usd-fee" className="text-sm font-medium text-slate-700">
+                匯美金手續費 (AUD)
+              </Label>
+              <Input
+                id="usd-fee"
+                type="number"
+                value={usdFeeAud}
+                onChange={(e) => setUsdFeeAud(parseFloat(e.target.value) || 0)}
+                className="border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                step="0.01"
                 min="0"
               />
             </div>
@@ -195,15 +221,15 @@ export default function Home() {
             {/* AUD Fee */}
             <div className="space-y-2">
               <Label htmlFor="aud-fee" className="text-sm font-medium text-slate-700">
-                匯出手續費 (NTD)
+                匯澳幣手續費 (AUD)
               </Label>
               <Input
                 id="aud-fee"
                 type="number"
-                value={audFeeNtd}
-                onChange={(e) => setAudFeeNtd(parseFloat(e.target.value) || 0)}
+                value={audFeeAud}
+                onChange={(e) => setAudFeeAud(parseFloat(e.target.value) || 0)}
                 className="border-slate-300 focus:border-blue-500 focus:ring-blue-500"
-                step="1"
+                step="0.01"
                 min="0"
               />
             </div>
@@ -211,7 +237,7 @@ export default function Home() {
             {/* AUD to USD Rate */}
             <div className="space-y-2">
               <Label htmlFor="aud-usd-rate" className="text-sm font-medium text-slate-700">
-                Revolut 澳幣兌美金匯率
+                Revolut 澳幣換美金匯率
               </Label>
               <Input
                 id="aud-usd-rate"
@@ -226,79 +252,107 @@ export default function Home() {
           </div>
         </Card>
 
-        {/* Summary Results */}
+        {/* Results Summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           {/* AUD Net */}
-          <Card className="p-4 border-slate-200 shadow-sm bg-white">
-            <p className="text-sm text-slate-600 mb-1">澳幣淨額</p>
+          <Card className="p-6 border-slate-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => handleCopy(result.audNetAmount.toString(), 0)}>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-slate-600">澳幣匯出淨額</h3>
+              {copiedIndex === 0 ? (
+                <Check className="w-4 h-4 text-emerald-600" />
+              ) : (
+                <Copy className="w-4 h-4 text-slate-400" />
+              )}
+            </div>
             <p className="text-2xl font-bold text-slate-900 font-mono">
-              {formatCurrency(result.audNetAmount, 0)}
+              {formatCurrency(result.audNetAmount)}
             </p>
-            <p className="text-xs text-slate-500 mt-2">AUD</p>
+            <p className="text-xs text-slate-500 mt-1">AUD</p>
           </Card>
 
           {/* USD Amount */}
-          <Card className="p-4 border-slate-200 shadow-sm bg-white">
-            <p className="text-sm text-slate-600 mb-1">美金金額</p>
+          <Card className="p-6 border-slate-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => handleCopy(result.usdAmount.toString(), 1)}>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-slate-600">美金換得金額</h3>
+              {copiedIndex === 1 ? (
+                <Check className="w-4 h-4 text-emerald-600" />
+              ) : (
+                <Copy className="w-4 h-4 text-slate-400" />
+              )}
+            </div>
             <p className="text-2xl font-bold text-slate-900 font-mono">
-              {formatCurrency(result.usdAmount, 2)}
+              {formatCurrency(result.usdAmount)}
             </p>
-            <p className="text-xs text-slate-500 mt-2">USD</p>
+            <p className="text-xs text-slate-500 mt-1">USD</p>
           </Card>
 
-          {/* USD Net */}
-          <Card className="p-4 border-slate-200 shadow-sm bg-white">
-            <p className="text-sm text-slate-600 mb-1">美金淨額</p>
+          {/* USD Net Amount */}
+          <Card className="p-6 border-slate-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => handleCopy(result.usdNetAmount.toString(), 2)}>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-slate-600">美金匯出淨額</h3>
+              {copiedIndex === 2 ? (
+                <Check className="w-4 h-4 text-emerald-600" />
+              ) : (
+                <Copy className="w-4 h-4 text-slate-400" />
+              )}
+            </div>
             <p className="text-2xl font-bold text-slate-900 font-mono">
-              {formatCurrency(result.usdNetAmount, 2)}
+              {formatCurrency(result.usdNetAmount)}
             </p>
-            <p className="text-xs text-slate-500 mt-2">USD</p>
+            <p className="text-xs text-slate-500 mt-1">USD</p>
+            <p className="text-xs text-slate-400 mt-2">= ({formatCurrency(result.audNetAmount)} - {formatCurrency(result.usdFeeAud)}) × {formatRate(input.audToUsdRate)}</p>
           </Card>
         </div>
 
-        {/* Best Result - Standalone Section */}
+        {/* Best Option */}
         {result.bestBank && (
-          <Card className="mb-8 p-8 border-emerald-300 shadow-md bg-gradient-to-br from-emerald-50 to-emerald-100">
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <Card className="mb-8 p-8 border-emerald-200 shadow-md bg-gradient-to-r from-emerald-50 to-emerald-100">
+            <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-emerald-700 mb-3 flex items-center gap-2 font-semibold">
-                  <TrendingUp className="w-5 h-5" />
-                  最優方案
-                </p>
-                <p className="text-lg text-emerald-900 mb-2">
-                  銀行：<span className="font-bold">{result.bestBank.bankName}</span>
-                </p>
-                <p className="text-lg text-emerald-900">
-                  兌換幣別：<span className="font-bold">澳幣 (AUD)</span>
-                </p>
+                <div className="flex items-center gap-2 mb-4">
+                  <TrendingUp className="w-5 h-5 text-emerald-600" />
+                  <h2 className="text-2xl font-bold text-emerald-900">最優方案</h2>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm text-emerald-700 font-medium">銀行</p>
+                    <p className="text-lg font-semibold text-emerald-900">{result.bestBank.bankName}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-emerald-700 font-medium">兌換幣別</p>
+                    <p className="text-lg font-semibold text-emerald-900">澳幣 (AUD)</p>
+                  </div>
+                </div>
               </div>
               <div className="text-right">
-                <p className="text-sm text-emerald-700 mb-2">換得台幣總額</p>
+                <p className="text-sm text-emerald-700 font-medium mb-1">換得台幣總額</p>
                 <p className="text-4xl font-bold text-emerald-900 font-mono">
-                  NT${formatCurrency(result.bestBank.audToTwdAmount, 0)}
+                  NT${formatCurrency(result.bestBank.audToTwdAmount)}
                 </p>
+                <p className="text-xs text-emerald-600 mt-2">= ({formatCurrency(result.audNetAmount)}) × {formatRate(result.bestBank.audToTwdRate)}</p>
               </div>
             </div>
           </Card>
         )}
 
         {/* Bank Comparison Table */}
-        <Card className="border-slate-200 shadow-sm overflow-hidden">
+        <Card className="mb-8 p-6 border-slate-200 shadow-sm overflow-x-auto">
+          <h2 className="text-xl font-semibold text-slate-900 mb-6">銀行比較</h2>
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-50 border-b border-slate-200">
-                <tr>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b-2 border-slate-300">
                   <th className="px-4 py-3 text-left text-sm font-semibold text-slate-900">
                     銀行
                   </th>
                   <th className="px-4 py-3 text-right text-sm font-semibold text-slate-900">
-                    美金買入匯率
+                    美金匯率
                   </th>
                   <th className="px-4 py-3 text-right text-sm font-semibold text-slate-900">
-                    澳幣買入匯率
-                  </th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold text-slate-900">
-                    匯入手續費
+                    澳幣匯率
                   </th>
                   <th className="px-4 py-3 text-right text-sm font-semibold text-slate-900">
                     美金台幣
@@ -343,61 +397,25 @@ export default function Home() {
                       {formatRate(bank.audToTwdRate)}
                     </td>
                     <td className="px-4 py-3 text-right text-sm text-slate-700 font-mono">
-                      NT${formatCurrency(bank.inFeeNtd, 0)}
+                      NT${formatCurrency(bank.usdToTwdAmount)}
                     </td>
                     <td className="px-4 py-3 text-right text-sm text-slate-700 font-mono">
-                      <button
-                        onClick={() =>
-                          handleCopy(
-                            bank.usdToTwdAmount.toString(),
-                            idx * 2
-                          )
-                        }
-                        className="hover:text-blue-600 transition-colors flex items-center justify-end gap-1 group"
-                      >
-                        NT${formatCurrency(bank.usdToTwdAmount, 0)}
-                        {copiedIndex === idx * 2 ? (
-                          <Check className="w-4 h-4 text-emerald-600" />
-                        ) : (
-                          <Copy className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        )}
-                      </button>
+                      NT${formatCurrency(bank.audToTwdAmount)}
                     </td>
-                    <td
-                      className={`px-4 py-3 text-right text-sm font-semibold font-mono ${
-                        bank.isBest ? "text-emerald-700" : "text-slate-900"
-                      }`}
-                    >
-                      <button
-                        onClick={() =>
-                          handleCopy(
-                            bank.audToTwdAmount.toString(),
-                            idx * 2 + 1
-                          )
-                        }
-                        className="hover:text-blue-600 transition-colors flex items-center justify-end gap-1 group"
-                      >
-                        NT${formatCurrency(bank.audToTwdAmount, 0)}
-                        {copiedIndex === idx * 2 + 1 ? (
-                          <Check className="w-4 h-4 text-emerald-600" />
-                        ) : (
-                          <Copy className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        )}
-                      </button>
-                    </td>
-                    <td
-                      className={`px-4 py-3 text-right text-sm font-semibold font-mono flex items-center justify-end gap-2 ${
-                        bank.difference < 0
-                          ? "text-emerald-600"
-                          : "text-red-600"
-                      }`}
-                    >
-                      {bank.difference < 0 ? (
-                        <TrendingDown className="w-4 h-4" />
+                    <td className={`px-4 py-3 text-right text-sm font-mono ${
+                      bank.difference > 0 ? "text-red-600" : "text-emerald-600"
+                    }`}>
+                      {bank.difference > 0 ? (
+                        <span className="flex items-center justify-end gap-1">
+                          <TrendingDown className="w-3 h-3" />
+                          -NT${formatCurrency(Math.abs(bank.difference))}
+                        </span>
                       ) : (
-                        <TrendingUp className="w-4 h-4" />
+                        <span className="flex items-center justify-end gap-1">
+                          <TrendingUp className="w-3 h-3" />
+                          +NT${formatCurrency(Math.abs(bank.difference))}
+                        </span>
                       )}
-                      NT${formatCurrency(Math.abs(bank.difference), 0)}
                     </td>
                   </tr>
                 ))}
@@ -428,7 +446,8 @@ export default function Home() {
               <h2 className="text-lg font-semibold text-slate-900 mb-6">編輯銀行匯率</h2>
               <div className="space-y-4 mb-6">
                 {editingBanks.map((bank, idx) => (
-                  <div key={idx} className="grid grid-cols-1 md:grid-cols-5 gap-3 p-4 bg-white rounded border border-slate-200">
+                  <div key={`bank-${idx}`}>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 bg-white rounded border border-slate-200">
                     <div>
                       <Label className="text-xs text-slate-600">銀行名稱</Label>
                       <Input
@@ -458,16 +477,19 @@ export default function Home() {
                         step="0.0001"
                       />
                     </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-1 gap-3 p-4 bg-white rounded border border-slate-200 md:ml-0">
                     <div>
-                      <Label className="text-xs text-slate-600">匯入手續費 (NTD)</Label>
+                      <Label className="text-xs text-slate-600">收款銀行解款手續費 (NTD)</Label>
                       <Input
                         type="number"
-                        value={bank.inFeeNtd}
-                        onChange={(e) => handleEditBank(idx, "inFeeNtd", e.target.value)}
+                        value={bank.receivingFeeNtd}
+                        onChange={(e) => handleEditBank(idx, "receivingFeeNtd", e.target.value)}
                         className="border-slate-300 mt-1"
                         step="1"
                       />
                     </div>
+                  </div>
                   </div>
                 ))}
               </div>
