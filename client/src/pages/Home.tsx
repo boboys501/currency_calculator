@@ -166,22 +166,7 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Rate Editor Toggle */}
-        <div className="mb-6">
-          <Button
-            onClick={() => setShowRateEditor(!showRateEditor)}
-            className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2"
-          >
-            <RefreshCw className="w-4 h-4" />
-            {showRateEditor ? "隱藏" : "更新"}匯率
-            {showRateEditor ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </Button>
-          {lastUpdateTime && (
-            <p className="text-sm text-slate-600 mt-2">
-              最後更新時間：<span className="font-semibold">{lastUpdateTime}</span>
-            </p>
-          )}
-        </div>
+
 
         {/* Rate Editor Panel */}
         {showRateEditor && (
@@ -491,6 +476,23 @@ export default function Home() {
           <p>
             💡 提示：澳幣台幣金額越高越好。點擊金額可複製到剪貼板。
           </p>
+        </div>
+
+        {/* Rate Editor Toggle - Bottom */}
+        <div className="mt-8 pt-6 border-t border-slate-200">
+          <Button
+            onClick={() => setShowRateEditor(!showRateEditor)}
+            className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            {showRateEditor ? "隱藏" : "更新"}匯率
+            {showRateEditor ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </Button>
+          {lastUpdateTime && (
+            <p className="text-sm text-slate-600 mt-3 text-center">
+              最後更新時間：<span className="font-semibold">{lastUpdateTime}</span>
+            </p>
+          )}
         </div>
       </div>
     </div>
