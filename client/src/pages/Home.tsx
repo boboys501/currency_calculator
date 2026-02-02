@@ -3,16 +3,18 @@
  * 
  * Design Philosophy: Modern Financial Dashboard
  * - Clean input form at the top
+ * - Manual rate update panel
  * - Summary results in the middle
  * - Standalone best result section
  * - Bank comparison table at the bottom
  * - Responsive design with mobile-first approach
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import {
   calculateExchange,
   formatCurrency,
@@ -20,7 +22,7 @@ import {
   type BankRate,
   type CalculationInput,
 } from "@/lib/calculator";
-import { TrendingUp, TrendingDown, Copy, Check } from "lucide-react";
+import { TrendingUp, TrendingDown, Copy, Check, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
 
 // Default bank rates (from the image)
 const DEFAULT_BANKS: BankRate[] = [
@@ -56,12 +58,39 @@ const DEFAULT_BANKS: BankRate[] = [
   },
 ];
 
+const STORAGE_KEY = "currencyCalculatorBanks";
+const TIMESTAMP_KEY = "currencyCalculatorTimestamp";
+
 export default function Home() {
   // Form inputs
   const [audAmount, setAudAmount] = useState<number>(2000);
   const [audFeeNtd, setAudFeeNtd] = useState<number>(8);
   const [audToUsdRate, setAudToUsdRate] = useState<number>(0.6545);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [banks, setBanks] = useState<BankRate[]>(DEFAULT_BANKS);
+  const [lastUpdateTime, setLastUpdateTime] = useState<string | null>(null);
+  const [showRateEditor, setShowRateEditor] = useState(false);
+  const [editingBanks, setEditingBanks] = useState<BankRate[]>(DEFAULT_BANKS);
+
+  // Load banks and timestamp from localStorage on mount
+  useEffect(() => {
+    const savedBanks = localStorage.getItem(STORAGE_KEY);
+    const savedTimestamp = localStorage.getItem(TIMESTAMP_KEY);
+    
+    if (savedBanks) {
+      try {
+        const parsedBanks = JSON.parse(savedBanks);
+        setBanks(parsedBanks);
+        setEditingBanks(parsedBanks);
+      } catch (e) {
+        console.error("Failed to parse saved banks", e);
+      }
+    }
+    
+    if (savedTimestamp) {
+      setLastUpdateTime(savedTimestamp);
+    }
+  }, []);
 
   // Calculate results
   const input: CalculationInput = {
@@ -71,8 +100,8 @@ export default function Home() {
   };
 
   const result = useMemo(
-    () => calculateExchange(input, DEFAULT_BANKS),
-    [input]
+    () => calculateExchange(input, banks),
+    [input, banks]
   );
 
   // Copy to clipboard handler
@@ -80,6 +109,48 @@ export default function Home() {
     navigator.clipboard.writeText(text);
     setCopiedIndex(index);
     setTimeout(() => setCopiedIndex(null), 2000);
+  };
+
+  // Handle rate update
+  const handleUpdateRates = () => {
+    setBanks(editingBanks);
+    const now = new Date();
+    const timeString = now.toLocaleString("zh-TW", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+    setLastUpdateTime(timeString);
+    
+    // Save to localStorage
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(editingBanks));
+    localStorage.setItem(TIMESTAMP_KEY, timeString);
+    
+    setShowRateEditor(false);
+  };
+
+  // Handle reset to defaults
+  const handleResetRates = () => {
+    setEditingBanks(DEFAULT_BANKS);
+    setBanks(DEFAULT_BANKS);
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(TIMESTAMP_KEY);
+    setLastUpdateTime(null);
+    setShowRateEditor(false);
+  };
+
+  // Handle editing bank rate
+  const handleEditBank = (index: number, field: keyof BankRate, value: any) => {
+    const updated = [...editingBanks];
+    if (field === "name") {
+      updated[index].name = value;
+    } else {
+      updated[index][field] = parseFloat(value) || 0;
+    }
+    setEditingBanks(updated);
   };
 
   return (
@@ -94,6 +165,90 @@ export default function Home() {
             澳幣到台幣多銀行匯率比較
           </p>
         </div>
+
+        {/* Rate Editor Toggle */}
+        <div className="mb-6">
+          <Button
+            onClick={() => setShowRateEditor(!showRateEditor)}
+            className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            {showRateEditor ? "隱藏" : "更新"}匯率
+            {showRateEditor ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </Button>
+          {lastUpdateTime && (
+            <p className="text-sm text-slate-600 mt-2">
+              最後更新時間：<span className="font-semibold">{lastUpdateTime}</span>
+            </p>
+          )}
+        </div>
+
+        {/* Rate Editor Panel */}
+        {showRateEditor && (
+          <Card className="mb-8 p-6 border-blue-200 shadow-md bg-blue-50">
+            <h2 className="text-lg font-semibold text-slate-900 mb-6">編輯銀行匯率</h2>
+            <div className="space-y-4 mb-6">
+              {editingBanks.map((bank, idx) => (
+                <div key={idx} className="grid grid-cols-1 md:grid-cols-5 gap-3 p-4 bg-white rounded border border-slate-200">
+                  <div>
+                    <Label className="text-xs text-slate-600">銀行名稱</Label>
+                    <Input
+                      type="text"
+                      value={bank.name}
+                      onChange={(e) => handleEditBank(idx, "name", e.target.value)}
+                      className="border-slate-300 mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-slate-600">美金買入匯率</Label>
+                    <Input
+                      type="number"
+                      value={bank.usdToTwdRate}
+                      onChange={(e) => handleEditBank(idx, "usdToTwdRate", e.target.value)}
+                      className="border-slate-300 mt-1"
+                      step="0.0001"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-slate-600">澳幣買入匯率</Label>
+                    <Input
+                      type="number"
+                      value={bank.audToTwdRate}
+                      onChange={(e) => handleEditBank(idx, "audToTwdRate", e.target.value)}
+                      className="border-slate-300 mt-1"
+                      step="0.0001"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-slate-600">匯入手續費 (NTD)</Label>
+                    <Input
+                      type="number"
+                      value={bank.inFeeNtd}
+                      onChange={(e) => handleEditBank(idx, "inFeeNtd", e.target.value)}
+                      className="border-slate-300 mt-1"
+                      step="1"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-3">
+              <Button
+                onClick={handleUpdateRates}
+                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+              >
+                保存匯率
+              </Button>
+              <Button
+                onClick={handleResetRates}
+                variant="outline"
+                className="flex-1"
+              >
+                重置為預設值
+              </Button>
+            </div>
+          </Card>
+        )}
 
         {/* Input Section */}
         <Card className="mb-8 p-6 border-slate-200 shadow-sm">
