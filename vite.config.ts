@@ -156,8 +156,8 @@ const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(
 const base = process.env.VITE_BASE_PATH || '/';
 
 export default defineConfig({
-  base,
-  plugins,
+  base:"/currency_calculator/",
+  plugins:[react()],
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
