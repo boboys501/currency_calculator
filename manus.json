@@ -1,0 +1,8 @@
+{
+  "name": "currency_calculator",
+  "type": "web-static",
+  "buildCommand": "pnpm build",
+  "outputDir": "docs",
+  "publicDir": "client/public",
+  "rootDir": "."
+}

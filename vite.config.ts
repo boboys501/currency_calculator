@@ -150,17 +150,14 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
-const plugins = [
-  react(), 
-  tailwindcss(), 
-  jsxLocPlugin(), 
-  vitePluginManusRuntime(), 
-  vitePluginManusDebugCollector()
-];
+const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
+
+// Get base path from environment or default to '/'
+const base = process.env.VITE_BASE_PATH || '/';
 
 export default defineConfig({
-  base: "/currency_calculator/",
-  plugins: plugins, 
+  base,
+  plugins,
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
@@ -171,7 +168,7 @@ export default defineConfig({
   envDir: path.resolve(import.meta.dirname),
   root: path.resolve(import.meta.dirname),
   build: {
-    outDir: 'dist',
+    outDir: path.resolve(import.meta.dirname, "docs"),
     emptyOutDir: true,
   },
   server: {

@@ -14,6 +14,7 @@ export interface BankRate {
   usdInFeeAud: number;  // 匯美金手續費 (AUD)
   audInFeeAud: number;  // 匯澳幣手續費 (AUD)
   receivingFeeNtd: number;  // 收款銀行解款手續費 (NTD)
+  rateUrl?: string;  // 匯率網頁 URL
 }
 
 export interface CalculationInput {
@@ -39,11 +40,13 @@ export interface BankComparison {
   audToTwdRate: number;
   usdInFeeAud: number;
   audInFeeAud: number;
+  receivingFeeNtd: number;
   usdToTwdAmount: number;
   audToTwdAmount: number;
   difference: number;
   isBest: boolean;
   isWorst: boolean;
+  rateUrl?: string;  // 匯率網頁 URL
 }
 
 /**
@@ -62,24 +65,23 @@ export function calculateExchange(
   input: CalculationInput,
   banks: BankRate[]
 ): CalculationResult {
-  // Step 1: Calculate USD net amount in AUD
-  const usdNetAud = input.audAmount - input.usdFeeAud;
+  // Step 1: Calculate USD amount (AUD Amount × AUD to USD Rate)
+  const usdAmount = input.audAmount * input.audToUsdRate;
   
-  // Step 2: Convert to USD amount
-  const usdAmount = usdNetAud * input.audToUsdRate;
+  // Step 2: Calculate USD net amount (USD Amount - USD Fee)
+  const usdNetAmount = usdAmount - input.usdFeeAud;
 
   // Step 3: Calculate AUD net amount
   const audNetAmount = input.audAmount - input.audFeeAud;
 
-  // Step 4: Calculate net USD amount (for display)
-  const usdNetAmount = usdAmount;
-
   // Step 5: Compare banks
   const bankComparisons = banks.map((bank) => {
-    // 美金台幣 = (匯出澳幣 - 匯美金手續費) × AUD to USD Rate × USD to TWD Rate
-    const usdToTwdAmount = usdNetAud * input.audToUsdRate * bank.usdToTwdRate;
-    // 澳幣台幣 = (匯出澳幣 - 匯澳幣手續費) × AUD to TWD Rate
-    const audToTwdAmount = audNetAmount * bank.audToTwdRate;
+    // 美金台幣 = (USD Net Amount × USD to TWD Rate) - 收款手續費
+    const usdToTwdBeforeFee = usdNetAmount * bank.usdToTwdRate;
+    const usdToTwdAmount = usdToTwdBeforeFee - bank.receivingFeeNtd;
+    // 澳幣台幣 = (匯出澳幣 - 匯澳幣手續費) × AUD to TWD Rate - 收款手續費
+    const audToTwdBeforeFee = audNetAmount * bank.audToTwdRate;
+    const audToTwdAmount = audToTwdBeforeFee - bank.receivingFeeNtd;
     const difference = usdToTwdAmount - audToTwdAmount;
 
     return {
@@ -88,11 +90,13 @@ export function calculateExchange(
       audToTwdRate: bank.audToTwdRate,
       usdInFeeAud: bank.usdInFeeAud,
       audInFeeAud: bank.audInFeeAud,
+      receivingFeeNtd: bank.receivingFeeNtd,
       usdToTwdAmount: Math.round(usdToTwdAmount * 100) / 100,
       audToTwdAmount: Math.round(audToTwdAmount * 100) / 100,
       difference: Math.round(difference * 100) / 100,
       isBest: false,
       isWorst: false,
+      rateUrl: bank.rateUrl,
     };
   });
 
